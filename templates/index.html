@@ -1,24 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>System Monitoring Dashboard</title>
+    <title>Cloud Monitoring Dashboard</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<meta http-equiv="refresh" content="5">
 
 <style>
 body {
     margin: 0;
     font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg,#1f4037,#99f2c8);
+    background: linear-gradient(135deg,#141E30,#243B55);
     height: 100vh;
+    color: white;
 }
 
 .container {
     text-align: center;
-    padding-top: 30px;
+    padding-top: 20px;
 }
 
 h1 {
-    color: white;
     letter-spacing: 2px;
 }
 
@@ -31,30 +33,35 @@ h1 {
 }
 
 .card {
-    width: 350px;
-    height: 300px;
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(12px);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-    padding: 20px;
+    width: 300px;
+    height: 260px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    padding: 15px;
     transition: 0.3s;
 }
 
 .card:hover {
     transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(255,255,255,0.6);
 }
 
-.alert {
-    margin-top: 20px;
-    color: white;
-    background-color: red;
-    padding: 10px;
-    border-radius: 8px;
-    width: 300px;
-    margin-left: auto;
-    margin-right: auto;
+.info-panel {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.info-box {
+    width: 250px;
+    padding: 15px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    text-align: left;
+    font-size: 15px;
 }
 </style>
 </head>
@@ -62,21 +69,52 @@ h1 {
 <body>
 
 <div class="container">
-    <h1>🚀 System Monitoring Dashboard</h1>
+    <h1>🚀 Cloud Monitoring Dashboard</h1>
 
-    <div class="dashboard">
-        <div class="card">
-            <div id="cpu-gauge"></div>
-        </div>
+<div class="dashboard">
 
-        <div class="card">
-            <div id="mem-gauge"></div>
-        </div>
-    </div>
+<div class="card">
+<div id="cpu-gauge"></div>
+</div>
 
-    {% if message %}
-    <div class="alert">{{ message }}</div>
-    {% endif %}
+<div class="card">
+<div id="mem-gauge"></div>
+</div>
+
+<div class="card">
+<div id="disk-gauge"></div>
+</div>
+
+</div>
+
+<div class="info-panel">
+
+<div class="info-box">
+<b>Pod Status:</b> {{ pod_status }}
+</div>
+
+<div class="info-box">
+<b>Restart Count:</b> {{ restart }}
+</div>
+
+<div class="info-box">
+<b>Node Status:</b> {{ node }}
+</div>
+
+<div class="info-box">
+<b>System Uptime:</b> {{ uptime }}
+</div>
+
+<div class="info-box">
+<b>Network Sent:</b> {{ bytes_sent }} MB
+</div>
+
+<div class="info-box">
+<b>Network Received:</b> {{ bytes_recv }} MB
+</div>
+
+</div>
+
 </div>
 
 <script>
@@ -85,18 +123,14 @@ var cpuGauge = {
     type: "indicator",
     mode: "gauge+number",
     value: {{ cpu_metric }},
-    title: { text: "CPU Usage", font: { size: 22 } },
+    title: { text: "CPU Usage" },
     gauge: {
         axis: { range: [0,100] },
-        bar: { color: "#00ffcc" },
-        bgcolor: "white",
-        borderwidth: 2,
-        bordercolor: "#ccc",
         steps: [
-            { range: [0,50], color: "#55efc4" },
-            { range: [50,85], color: "#ffeaa7" },
-            { range: [85,100], color: "#ff7675" }
-        ],
+            { range: [0,50], color: "green" },
+            { range: [50,80], color: "yellow" },
+            { range: [80,100], color: "red" }
+        ]
     }
 };
 
@@ -104,30 +138,44 @@ var memGauge = {
     type: "indicator",
     mode: "gauge+number",
     value: {{ mem_metric }},
-    title: { text: "Memory Usage", font: { size: 22 } },
+    title: { text: "Memory Usage" },
     gauge: {
         axis: { range: [0,100] },
-        bar: { color: "#0984e3" },
-        bgcolor: "white",
-        borderwidth: 2,
-        bordercolor: "#ccc",
         steps: [
-            { range: [0,50], color: "#55efc4" },
-            { range: [50,85], color: "#ffeaa7" },
-            { range: [85,100], color: "#ff7675" }
-        ],
+            { range: [0,50], color: "green" },
+            { range: [50,80], color: "yellow" },
+            { range: [80,100], color: "red" }
+        ]
+    }
+};
+
+var diskGauge = {
+    type: "indicator",
+    mode: "gauge+number",
+    value: {{ disk_metric }},
+    title: { text: "Disk Usage" },
+    gauge: {
+        axis: { range: [0,100] },
+        steps: [
+            { range: [0,50], color: "green" },
+            { range: [50,80], color: "yellow" },
+            { range: [80,100], color: "red" }
+        ]
     }
 };
 
 var layout = {
-    width: 300,
-    height: 250,
-    margin: { t: 0, b: 0 }
+    width: 250,
+    height: 200,
+    margin: { t: 0, b: 0 },
+    paper_bgcolor: "rgba(0,0,0,0)"
 };
 
 Plotly.newPlot('cpu-gauge', [cpuGauge], layout);
 Plotly.newPlot('mem-gauge', [memGauge], layout);
+Plotly.newPlot('disk-gauge', [diskGauge], layout);
 
 </script>
+
 </body>
 </html>
