@@ -1,6 +1,7 @@
 import boto3
 from datetime import date, timedelta
 import smtplib
+import os
 
 client = boto3.client('ce', region_name='ap-south-1')
 
@@ -18,9 +19,9 @@ response = client.get_cost_and_usage(
 
 cost = response['ResultsByTime'][0]['Total']['UnblendedCost']['Amount']
 
-sender = "gajendrapunekar017@gmail.com"
-receiver = "gajendrapunekar007@gmail.com"
-password = "your_app_password"
+sender = os.getenv("EMAIL_USER")
+receiver = "gajendrapunekar017@gmail.com"
+password = os.getenv("EMAIL_PASS")
 
 message = f"""Subject: AWS Daily Cost Report
 
