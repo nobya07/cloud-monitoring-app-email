@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>System Monitoring Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg,#1f4037,#99f2c8);
+    height: 100vh;
+}
+
+.container {
+    text-align: center;
+    padding-top: 30px;
+}
+
+h1 {
+    color: white;
+    letter-spacing: 2px;
+}
+
+.dashboard {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.card {
+    width: 350px;
+    height: 300px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    padding: 20px;
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(255,255,255,0.6);
+}
+
+.alert {
+    margin-top: 20px;
+    color: white;
+    background-color: red;
+    padding: 10px;
+    border-radius: 8px;
+    width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🚀 System Monitoring Dashboard</h1>
+
+    <div class="dashboard">
+        <div class="card">
+            <div id="cpu-gauge"></div>
+        </div>
+
+        <div class="card">
+            <div id="mem-gauge"></div>
+        </div>
+    </div>
+
+    {% if message %}
+    <div class="alert">{{ message }}</div>
+    {% endif %}
+</div>
+
+<script>
+
+var cpuGauge = {
+    type: "indicator",
+    mode: "gauge+number",
+    value: {{ cpu_metric }},
+    title: { text: "CPU Usage", font: { size: 22 } },
+    gauge: {
+        axis: { range: [0,100] },
+        bar: { color: "#00ffcc" },
+        bgcolor: "white",
+        borderwidth: 2,
+        bordercolor: "#ccc",
+        steps: [
+            { range: [0,50], color: "#55efc4" },
+            { range: [50,85], color: "#ffeaa7" },
+            { range: [85,100], color: "#ff7675" }
+        ],
+    }
+};
+
+var memGauge = {
+    type: "indicator",
+    mode: "gauge+number",
+    value: {{ mem_metric }},
+    title: { text: "Memory Usage", font: { size: 22 } },
+    gauge: {
+        axis: { range: [0,100] },
+        bar: { color: "#0984e3" },
+        bgcolor: "white",
+        borderwidth: 2,
+        bordercolor: "#ccc",
+        steps: [
+            { range: [0,50], color: "#55efc4" },
+            { range: [50,85], color: "#ffeaa7" },
+            { range: [85,100], color: "#ff7675" }
+        ],
+    }
+};
+
+var layout = {
+    width: 300,
+    height: 250,
+    margin: { t: 0, b: 0 }
+};
+
+Plotly.newPlot('cpu-gauge', [cpuGauge], layout);
+Plotly.newPlot('mem-gauge', [memGauge], layout);
+
+</script>
+</body>
+</html>
