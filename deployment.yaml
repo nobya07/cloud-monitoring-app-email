@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask-app
+  name: cloud-native
   namespace: gajendra
 spec:
   replicas: 2
@@ -12,11 +12,11 @@ spec:
       maxUnavailable: 0 
   selector:
     matchLabels:
-      app: flask-app
+      app: cloud-native
   template:
     metadata:
       labels:
-        app: flask-app
+        app: cloud-native
     spec:
       containers:
       - name: cloud-native
@@ -31,9 +31,10 @@ metadata:
   name: flask-service
   namespace: gajendra
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
-    app: flask-app
+    app: cloud-native
   ports:
     - port: 5000
       targetPort: 5000
+      nodePort: 30007

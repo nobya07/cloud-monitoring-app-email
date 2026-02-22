@@ -1,0 +1,1 @@
+0 9 * * * EMAIL_USER="gajendrapunekar007@gmail.com" EMAIL_PASS="zlxvvxvuhrwwapst" /usr/bin/python3 /home/ubuntu/cloud-monitoring-app-email/cost_report.py
