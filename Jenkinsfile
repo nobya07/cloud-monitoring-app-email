@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_USER = credentials('docker-user')
-        DOCKER_PASS = credentials('docker-pass')
-        IMAGE       = "gajendra1/cloud-native:latest"
+        DOCKER_CREDS = credentials('docker-creds')
+        EMAIL_CREDS  = credentials('email-creds')
+        IMAGE        = "gajendra1/cloud-native:latest"
     }
 
     stages {
@@ -25,10 +25,10 @@ pipeline {
             }
         }
 
-        stage('Push') {
+        stage('Push to DockerHub') {
             steps {
                 sh '''
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                    echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin
                     docker push $IMAGE
                 '''
             }
@@ -39,6 +39,8 @@ pipeline {
                 sh '''
                     docker run --name cloud-native -d -p 5000:5000 \
                       -v ~/.kube/config:/root/.kube/config \
+                      -e EMAIL_USER=$EMAIL_CREDS_USR \
+                      -e EMAIL_PASS=$EMAIL_CREDS_PSW \
                       $IMAGE
                 '''
             }
@@ -57,9 +59,17 @@ pipeline {
         stage('Verify') {
             steps {
                 sh '''
-                    kubectl get pods    -n gajendra
+                    echo "=== Docker Container ==="
+                    docker ps | grep cloud-native
+
+                    echo "=== Kubernetes Pods ==="
+                    kubectl get pods -n gajendra
+
+                    echo "=== Kubernetes Service ==="
                     kubectl get service -n gajendra
-                    echo "App running at http://$(curl -s ifconfig.me):5000"
+
+                    echo "Docker  --> http://EC2-IP:5000"
+                    echo "Kubernetes --> http://EC2-IP:30500"
                 '''
             }
         }
@@ -68,10 +78,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Pipeline completed successfully!'
+            echo 'Pipeline completed successfully!'
         }
         failure {
-            echo '❌ Pipeline failed — check logs above'
+            echo 'Pipeline failed - check logs above'
         }
     }
 }
