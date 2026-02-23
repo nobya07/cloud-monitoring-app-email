@@ -59,7 +59,7 @@ pipeline {
                 sh '''
                     kubectl get pods    -n gajendra
                     kubectl get service -n gajendra
-                    echo "App running at http://$(curl -s ifconfig.me):30500"
+                    echo "App running at http://$(curl -s ifconfig.me):5000"
                 '''
             }
         }
