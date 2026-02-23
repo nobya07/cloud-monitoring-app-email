@@ -5,11 +5,6 @@ metadata:
   namespace: gajendra
 spec:
   replicas: 2
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1             
-      maxUnavailable: 0 
   selector:
     matchLabels:
       app: cloud-native
@@ -20,10 +15,11 @@ spec:
     spec:
       containers:
       - name: cloud-native
-        image: gajendra1/cloud-native:latest 
+        image: gajendra1/cloud-native:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
-        
+
 ---
 apiVersion: v1
 kind: Service
@@ -37,4 +33,4 @@ spec:
   ports:
     - port: 5000
       targetPort: 5000
-      
+      nodePort: 30500

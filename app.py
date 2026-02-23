@@ -5,35 +5,32 @@ import subprocess
 
 app = Flask(__name__)
 
+def safe_cmd(command):
+    try:
+        result = subprocess.getoutput(command)
+        if any(bad in result.lower() for bad in ["not found", "error", "refused", "forbidden"]):
+            return "N/A"
+        return result.strip() or "N/A"
+    except:
+        return "N/A"
+
 @app.route('/')
 def home():
 
-    # CPU Usage
-    cpu_metric = psutil.cpu_percent()
+    cpu_metric  = round(psutil.cpu_percent(interval=1), 1)
+    mem_metric  = round(psutil.virtual_memory().percent, 1)
 
-    # Memory Usage
-    mem_metric = psutil.virtual_memory().percent
+    disk        = shutil.disk_usage("/")
+    disk_metric = round((disk.used / disk.total) * 100, 1)
 
-    # Disk Usage
-    disk = shutil.disk_usage("/")
-    disk_metric = (disk.used / disk.total) * 100
+    net         = psutil.net_io_counters()
+    bytes_sent  = round(net.bytes_sent / (1024 * 1024), 2)
+    bytes_recv  = round(net.bytes_recv / (1024 * 1024), 2)
 
-    # Network Usage
-    net = psutil.net_io_counters()
-    bytes_sent = net.bytes_sent / (1024 * 1024)
-    bytes_recv = net.bytes_recv / (1024 * 1024)
-
-    # Pod Status
-    pod_status = subprocess.getoutput("kubectl get pods --no-headers | awk '{print $3}'")
-
-    # Restart Count
-    restart = subprocess.getoutput("kubectl get pods -o jsonpath='{.items[*].status.containerStatuses[*].restartCount}'")
-
-    # Node Status
-    node = subprocess.getoutput("kubectl get nodes --no-headers | awk '{print $2}'")
-
-    # System Uptime
-    uptime = subprocess.getoutput("uptime -p")
+    pod_status  = safe_cmd("kubectl get pods -n gajendra --no-headers | awk '{print $3}'")
+    restart     = safe_cmd("kubectl get pods -n gajendra --no-headers | awk '{print $4}'")
+    node        = safe_cmd("kubectl get nodes --no-headers | awk '{print $2}'")
+    uptime      = safe_cmd("uptime -p")
 
     return render_template("index.html",
                            cpu_metric=cpu_metric,
@@ -46,4 +43,5 @@ def home():
                            bytes_sent=bytes_sent,
                            bytes_recv=bytes_recv)
 
-app.run(host='0.0.0.0', port=5000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False)
