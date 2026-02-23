@@ -1,158 +1,199 @@
-🚀 Cloud Native Monitoring Application using Jenkins & Kubernetes
-📌 Project Overview
+# ☁️ Cloud Monitoring App
 
-This project demonstrates a complete CI/CD pipeline for deploying a Cloud Native Monitoring Application using:
+A Flask-based cloud monitoring dashboard that displays real-time CPU, memory, disk usage, Kubernetes pod/node status, and sends daily AWS cost reports via email.
 
-Docker for containerization
+---
 
-Kubernetes (Minikube) for orchestration
+## 📁 Project Structure
 
-Jenkins for CI/CD automation
+```
+cloud-monitoring-app/
+│
+├── app.py                  # Flask application
+├── cost_report.py          # AWS cost email script
+├── Dockerfile              # Docker image setup
+├── requirements.txt        # Python dependencies
+├── deployment.yaml         # Kubernetes deployment and service
+├── Jenkinsfile             # CI/CD pipeline
+└── templates/
+    └── index.html          # Dashboard UI
+```
 
-AWS EC2 as deployment server
+---
 
-AWS Cost Explorer for daily cost monitoring
+## 🛠️ Tech Stack
 
-⚙️ Pre-Requisites
+| Tool | Purpose |
+|------|---------|
+| Python + Flask | Web application |
+| Docker | Containerization |
+| Kubernetes (Minikube) | Container orchestration |
+| Jenkins | CI/CD pipeline |
+| AWS Cost Explorer | Daily cost reporting |
+| Gmail SMTP | Email notifications |
+| EC2 | Cloud hosting |
 
-Before running this project, make sure the following tools are installed and configured on your EC2 instance:
+---
 
--Jenkins
+## ⚙️ Prerequisites
 
--Docker
+- AWS EC2 instance (Ubuntu)
+- Docker installed
+- Minikube installed
+- kubectl installed
+- Jenkins installed
+- DockerHub account
+- Gmail account with App Password
 
--Kubernetes
+---
 
--Minikube
+## 🚀 Setup & Installation
 
--kubectl
+### 1. Clone the Repository
 
-🔁 CI/CD Pipeline Flow
-    GitHub Push
-        ↓
-    Jenkins Build Triggered
-        ↓
-    Old Docker Container Stopped
-        ↓
-    Old Container Removed
-        ↓
-    New Docker Image Built
-        ↓
-    New Container Created
-        ↓
-    Kubernetes Deployment Updated
-        ↓
-    New Pod Created
-        ↓
-    Application Updated Automatically
+```bash
+git clone https://github.com/nobya07/cloud-monitoring-app-email.git
+cd cloud-monitoring-app-email
+```
 
+### 2. Install Python Dependencies
 
-📦 Create Jenkins Job
+```bash
+pip install -r requirements.txt
+```
 
-    Create:
+### 3. Set Environment Variables
 
-    New Item → Freestyle Project
-    Name → cloud-monitoring
+```bash
+sudo nano /etc/environment
 
-    Add GitHub Repository:
+# Add these lines
+EMAIL_USER="your@gmail.com"
+EMAIL_PASS="your_16_digit_app_password"
 
-    https://github.com/<your-username>/<repo-name>.git
+# Save and reload
+source /etc/environment
+```
 
-🛠️ Jenkins Build Steps Used
+### 4. Build and Run with Docker
 
-    docker stop cloud-native
-    docker rm cloud-native
-    docker build -t cloud-native .
-    docker run --name cloud-native -d -p 5000:5000 cloud-native
-    kubectl apply -f deployment.yaml
+```bash
+docker build -t gajendra1/cloud-native:latest .
 
+docker run --name cloud-native -d -p 5000:5000 \
+  -v ~/.kube/config:/root/.kube/config \
+  -e EMAIL_USER=$EMAIL_USER \
+  -e EMAIL_PASS=$EMAIL_PASS \
+  gajendra1/cloud-native:latest
+```
 
-☸️ Kubernetes Deployment
+### 5. Deploy to Kubernetes
 
-Application is deployed using Kubernetes Deployment
+```bash
+kubectl create namespace gajendra
+kubectl apply -f deployment.yaml
+kubectl get pods -n gajendra
+kubectl get service -n gajendra
+```
 
-Rolling Update strategy is used to avoid downtime
+---
 
-Kubernetes Service exposes the application externally using NodePort
+## 🌐 Access the App
 
-💰 AWS Cost Automation
-    Create IAM Role
+| Method | URL |
+|--------|-----|
+| Docker | `http://<EC2-PUBLIC-IP>:5000` |
+| Kubernetes | `http://<EC2-PUBLIC-IP>:30500` |
 
-    Go to:
-    IAM → Roles → Create Role → EC2
+---
 
-    Attach Policy:
-    BillingReadOnlyAccess
+## 📧 AWS Cost Report
 
-    Attach Role to EC2 Instance.
+The `cost_report.py` script fetches yesterday's AWS cost and sends it via email every day at 9 AM.
 
-📧 Store Email Credentials Securely
-    nano ~/.bashrc
+### Setup Cron Job
 
-    Add:
+```bash
+crontab -e
 
-    export EMAIL_USER="your_email@gmail.com"
-    export EMAIL_PASS="your_app_password"
+# Add this line
+0 9 * * * EMAIL_USER="your@gmail.com" EMAIL_PASS="yourpassword" /usr/bin/python3 /home/ubuntu/cost_report.py >> /var/log/cost_report.log 2>&1
+```
 
-    Apply:
+### Check Logs
 
-    source ~/.bashrc
+```bash
+cat /var/log/cost_report.log
+```
 
-⏰ Setup Daily Cron Job
-    crontab -e
+---
 
-    Add:
+## 🔧 Jenkins CI/CD Pipeline
 
-    0 9 * * * EMAIL_USER="your_email@gmail.com" EMAIL_PASS="your_app_password" /usr/bin/python3 /home/ubuntu/cloud-monitoring-app-email/cost_report.py
+### Jenkins Credentials Required
 
-    Verify:
+| ID | Type | Value |
+|----|------|-------|
+| `docker-creds` | Username with password | DockerHub username + password |
+| `email-creds` | Username with password | Gmail address + App password |
 
-    crontab -l
+### Pipeline Stages
 
-🌐  Access Application
+```
+Cleanup → Build → Push to DockerHub → Run Container → Deploy to Kubernetes → Verify
+```
 
-    Check Service:
+### Setup Steps
 
-    kubectl get svc -n gajendra
+```
+1. Jenkins → New Item → Pipeline
+2. Configure → Pipeline → Pipeline script from SCM
+3. SCM → Git → enter your GitHub repo URL
+4. Branch → main
+5. Script Path → Jenkinsfile
+6. Build Triggers → Poll SCM → H/5 * * * *
+7. Save
+```
 
-    Open in Browser:
+---
 
-    http://<EC2-PUBLIC-IP>:<NODEPORT>
+## 🔒 EC2 Security Group Rules
 
+| Port | Purpose |
+|------|---------|
+| 22 | SSH |
+| 8080 | Jenkins |
+| 5000 | Docker app |
+| 30500 | Kubernetes app |
 
+---
 
-🎯 Final Output
+## 📊 Dashboard Features
 
-    Monitoring Application deployed on Kubernetes
+- CPU Usage gauge
+- Memory Usage gauge
+- Disk Usage gauge
+- Pod Status
+- Restart Count
+- Node Status
+- System Uptime
+- Network Sent / Received
 
-    CI/CD Pipeline Automated using Jenkins
+---
 
-    Docker Image built automatically
+## 📝 Gmail App Password Setup
 
-    Rolling Deployment enabled
+```
+Google Account → Security
+→ 2-Step Verification → App Passwords
+→ Select app: Mail
+→ Select device: Other → name it "AWS Report"
+→ Copy the 16-character password
+```
 
-    Daily AWS Cost Email Automation
+---
 
-    Secure IAM Role based AWS access
+## 👤 Author
 
-
-🧠 DevOps Concepts Implemented
-
-    CI/CD Pipeline
-
-    Containerization
-
-    Kubernetes Deployment
-
-    Rolling Updates
-
-    IAM Role Based Access
-
-    Cron Job Scheduling
-
-    Secure Environment Variables
-
-
-✅ Conclusion
-
-This project demonstrates an end-to-end DevOps implementation of deploying a cloud-native monitoring application on Kubernetes with automated CI/CD and cost monitoring using AWS services.
+**Gajendra Punekar**
+GitHub: [@nobya07](https://github.com/nobya07)
