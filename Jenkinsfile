@@ -61,15 +61,12 @@ pipeline {
                 sh '''
                     echo "=== Docker Container ==="
                     docker ps | grep cloud-native
-
                     echo "=== Kubernetes Pods ==="
                     kubectl get pods -n gajendra
-
                     echo "=== Kubernetes Service ==="
                     kubectl get service -n gajendra
-
-                    echo "Docker  --> http://EC2-IP:5000"
-                    echo "Kubernetes --> http://EC2-IP:30500"
+                    echo "Docker App --> http://EC2-IP:5000"
+                    echo "K8s App    --> http://EC2-IP:30500"
                 '''
             }
         }
@@ -85,5 +82,3 @@ pipeline {
         }
     }
 }
-```
-
